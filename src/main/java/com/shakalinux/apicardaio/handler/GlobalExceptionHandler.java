@@ -1,4 +1,4 @@
-package com.shakalinux.apicardaio.controller;
+package com.shakalinux.apicardaio.handler;
 
 import com.shakalinux.apicardaio.exception.*;
 import org.springframework.http.HttpStatus;

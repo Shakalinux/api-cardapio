@@ -8,9 +8,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/admin/categorias")
@@ -27,16 +31,26 @@ public class AdminCategoriaController {
             description = "Cadastra uma nova categoria para agrupar produtos (ex: 'Pizzas', 'Sucos'). **Requer Bearer Token (ADMIN).**"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Categoria criada com sucesso"),
+            @ApiResponse(responseCode = "201", description = "Categoria criada com sucesso"), // Status 201 aqui
             @ApiResponse(responseCode = "400", description = "Dados da categoria inválidos (ex: nome vazio)"),
             @ApiResponse(responseCode = "401", description = "Não autorizado (Token ausente ou inválido)"),
             @ApiResponse(responseCode = "403", description = "Proibido (Usuário não tem a role ADMIN)")
     })
     @SecurityRequirement(name = "BearerAuth")
     @PostMapping
-    public ResponseEntity<?> criar(@RequestBody Categoria categoria) {
+    public ResponseEntity<Categoria> criar(@RequestBody Categoria categoria) {
 
-        return ResponseEntity.ok(categoriaService.save(categoria));
+
+        Categoria categoriaSalva = categoriaService.save(categoria);
+
+
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(categoriaSalva.getIdCategoria())
+                .toUri();
+
+
+        return ResponseEntity.created(uri).body(categoriaSalva);
     }
 
 
@@ -65,7 +79,7 @@ public class AdminCategoriaController {
             description = "Exclui permanentemente uma categoria do cardápio. **Requer Bearer Token (ADMIN).**"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Categoria removida com sucesso (No Content)"),
+            @ApiResponse(responseCode = "204", description = "Categoria removida com sucesso (No Content)"), // Geralmente usamos 204 para DELETE
             @ApiResponse(responseCode = "401", description = "Não autorizado"),
             @ApiResponse(responseCode = "403", description = "Proibido"),
             @ApiResponse(responseCode = "404", description = "Categoria não encontrada"),
@@ -75,6 +89,7 @@ public class AdminCategoriaController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> remover(@PathVariable Long id) {
         categoriaService.remover(id);
-        return ResponseEntity.ok().build();
+
+        return ResponseEntity.noContent().build();
     }
 }
